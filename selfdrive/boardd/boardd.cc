@@ -585,8 +585,7 @@ int main() {
     std::vector<std::thread> threads;
     threads.emplace_back(panda_state_thread, &pm, peripheral_panda, panda, getenv("STARTED") != nullptr);
     threads.emplace_back(peripheral_control_thread, peripheral_panda);
-    if (panda_type > '1')  // get panda type: ['0' = UNKNOWN, WHITE, GREY, BLACK, PEDAL, UNO, DOS]
-      threads.emplace_back(pigeon_thread, peripheral_panda);
+    threads.emplace_back(pigeon_thread, peripheral_panda);
 
     threads.emplace_back(can_send_thread, panda, getenv("FAKESEND") != nullptr);
     threads.emplace_back(can_recv_thread, panda);
