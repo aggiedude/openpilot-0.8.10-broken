@@ -38,6 +38,8 @@
 #define NIBBLE_TO_HEX(n) ((n) < 10 ? (n) + '0' : ((n) - 10) + 'a')
 using namespace std::chrono_literals;
 
+char panda_type = '\0';
+
 std::atomic<bool> ignition(false);
 
 ExitHandler do_exit;
@@ -81,10 +83,8 @@ bool safety_setter_thread(Panda *panda) {
       return false;
     };
 
-    if (p.getBool("ControlsReady")) {
-      params = p.get("CarParams");
-      if (params.size() > 0) break;
-    }
+    params = p.get("CarParams");
+    if (params.size() > 0) break;
     util::sleep_for(100);
   }
   LOGW("got %d bytes CarParams", params.size());
@@ -146,6 +146,12 @@ Panda *usb_connect() {
   if (auto serial = panda->get_serial(); serial) {
     params.put("PandaDongleId", serial->c_str(), serial->length());
     LOGW("panda serial: %s", serial->c_str());
+  } else { return nullptr; }
+
+  // get panda type: [0 = UNKNOWN, WHITE, GREY, BLACK, PEDAL, UNO, DOS]
+  panda_type = '0' + (char)(panda->get_hw_type());
+  if (panda_type != '0') {
+    params.put("PandaType", &panda_type, 1);
   } else { return nullptr; }
 
   // power on charging, only the first time. Panda can also change mode and it causes a brief disconneciton
@@ -587,7 +593,8 @@ int main() {
     std::vector<std::thread> threads;
     threads.emplace_back(panda_state_thread, &pm, peripheral_panda, panda, getenv("STARTED") != nullptr);
     threads.emplace_back(peripheral_control_thread, peripheral_panda);
-    threads.emplace_back(pigeon_thread, peripheral_panda);
+    if (panda_type > '1')  // get panda type: ['0' = UNKNOWN, WHITE, GREY, BLACK, PEDAL, UNO, DOS]
+      threads.emplace_back(pigeon_thread, peripheral_panda);
 
     threads.emplace_back(can_send_thread, panda, getenv("FAKESEND") != nullptr);
     threads.emplace_back(can_recv_thread, panda);

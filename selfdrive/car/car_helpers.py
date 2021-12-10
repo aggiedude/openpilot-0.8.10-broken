@@ -87,8 +87,9 @@ def only_toyota_left(candidate_cars):
 def fingerprint(logcan, sendcan):
   fixed_fingerprint = os.environ.get('FINGERPRINT', "")
   skip_fw_query = os.environ.get('SKIP_FW_QUERY', False)
+  has_relay = Params().get("PandaType", encoding='utf8') > "2"  # [0 = UNKNOWN, WHITE, GREY, BLACK, PEDAL, UNO, DOS]
 
-  if not fixed_fingerprint and not skip_fw_query:
+  if has_relay and not fixed_fingerprint and not skip_fw_query:
     # Vin query only reliably works thorugh OBDII
     bus = 1
 
@@ -178,7 +179,7 @@ def get_car(logcan, sendcan):
 
   if candidate is None:
     cloudlog.warning("car doesn't match any fingerprints: %r", fingerprints)
-    candidate = "mock"
+    candidate = "HONDA ACCORD 2018"
 
   CarInterface, CarController, CarState = interfaces[candidate]
   car_params = CarInterface.get_params(candidate, fingerprints, car_fw)

@@ -1,5 +1,6 @@
 from selfdrive.car.honda.values import HONDA_BOSCH, CAR, CarControllerParams
 from selfdrive.config import Conversions as CV
+from common.params import Params
 
 # CAN bus layout with relay
 # 0 = ACC-CAN - radar side
@@ -7,8 +8,11 @@ from selfdrive.config import Conversions as CV
 # 2 = ACC-CAN - camera side
 # 3 = F-CAN A - OBDII port
 
+def has_relay():
+  return Params().get("PandaType", encoding='utf8') > "2"  # [0 = UNKNOWN, WHITE, GREY, BLACK, PEDAL, UNO, DOS]
+
 def get_pt_bus(car_fingerprint):
-  return 1 if car_fingerprint in HONDA_BOSCH else 0
+  return 1 if car_fingerprint in HONDA_BOSCH and has_relay() else 0
 
 
 def get_lkas_cmd_bus(car_fingerprint, radar_disabled=False):
@@ -16,7 +20,7 @@ def get_lkas_cmd_bus(car_fingerprint, radar_disabled=False):
     # when radar is disabled, steering commands are sent directly to powertrain bus
     return get_pt_bus(car_fingerprint)
   # normally steering commands are sent to radar, which forwards them to powertrain bus
-  return 0
+  return 2 if car_fingerprint in HONDA_BOSCH and not has_relay() else 0
 
 def create_brake_command(packer, apply_brake, pump_on, pcm_override, pcm_cancel_cmd, fcw, idx, car_fingerprint, stock_brake):
   # TODO: do we loose pressure if we keep pump off for long?
