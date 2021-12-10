@@ -38,8 +38,6 @@
 #define NIBBLE_TO_HEX(n) ((n) < 10 ? (n) + '0' : ((n) - 10) + 'a')
 using namespace std::chrono_literals;
 
-char panda_type = '\0';
-
 std::atomic<bool> ignition(false);
 
 ExitHandler do_exit;
@@ -146,12 +144,6 @@ Panda *usb_connect() {
   if (auto serial = panda->get_serial(); serial) {
     params.put("PandaDongleId", serial->c_str(), serial->length());
     LOGW("panda serial: %s", serial->c_str());
-  } else { return nullptr; }
-
-  // get panda type: [0 = UNKNOWN, WHITE, GREY, BLACK, PEDAL, UNO, DOS]
-  panda_type = '0' + (char)(panda->get_hw_type());
-  if (panda_type != '0') {
-    params.put("PandaType", &panda_type, 1);
   } else { return nullptr; }
 
   // power on charging, only the first time. Panda can also change mode and it causes a brief disconneciton
